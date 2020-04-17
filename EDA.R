@@ -3,6 +3,7 @@ setwd("Users/ucaballero/Desktop/repositories/Survey analysis/")
 
 
 survey <- read.csv("survey.csv",header = T,sep = ",", encoding = "UTF-8")
+column_names <- read.csv("column_names.csv",header = T,sep = ";")
 !(names(survey) %in% c("Numero.de.cuenta"))
 survey <- survey[,!(names(survey) %in% c("Numero.de.cuenta"))]
 
@@ -12,6 +13,12 @@ summary(survey)
 survey
 head(survey,2)
 tail(survey,2)
+
+
+
+
+
+
 #### DATAFRAMES 
 
 names(mtcars) ##obtener los nombres de mis columnas
