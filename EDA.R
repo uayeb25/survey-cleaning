@@ -1,5 +1,5 @@
 setwd("/")
-setwd("Users/ucaballero/Desktop/repositories/Survey analysis/")
+setwd("Users/ucaballero/Desktop/repositories/SEMINARIO/Survey analysis/")
 
 
 survey <- read.csv("survey.csv",header = T,sep = ",", encoding = "UTF-8")
