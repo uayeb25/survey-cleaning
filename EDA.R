@@ -1,9 +1,15 @@
 setwd("/")
 setwd("Users/ucaballero/Desktop/repositories/SEMINARIO/Survey analysis/")
 
+library(dplyr)
 
 survey <- read.csv("survey.csv",header = T,sep = ",", encoding = "UTF-8")
 column_names <- read.csv("column_names_tratados.csv",header = T,sep = ";")
+notas <- read.csv("notas.csv", dec = ".", sep = ";")
+
+survey <- inner_join(survey,notas, by=c("Numero.de.cuenta"="cuenta"))
+
+
 !(names(survey) %in% c("Numero.de.cuenta"))
 survey <- survey[,!(names(survey) %in% c("Numero.de.cuenta"))]
 

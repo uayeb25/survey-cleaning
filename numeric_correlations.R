@@ -66,8 +66,8 @@ fviz_cluster(k2, data = res$x[,1:2])
 k2$cluster
 
 
-cbind(survey,k2$cluster)
-
+survey <- cbind(survey,k2$cluster)
+names(survey)[length(names(survey))] <- "perfil"
 
 
 
