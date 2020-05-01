@@ -1,0 +1,149 @@
+---
+title: "Profile performance analysis"
+author: "Uayeb Caballero"
+date: "30 de abril de 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+```
+
+## Introducción
+
+En este pequeño analisis vamos a estudiar cuales son las caracteristicas de los estudiantes con mayor riesgo a tener un desempeño academico bajo. la recolección de información se realizo mediante encuestan en aplicadas a los alumnos de base de datos I y programación orientada a objetos. Sabemos que es de gran importancia para los docentes la Universidad Nacional Autonoma de Honduras conocer mejors a sus alumnos y planificar intervenciones mas efectivas por lo que este estudio demuestra cuales deberian de ser esos driver a tener en cuenta al inicio del periodo academico.
+
+
+## Variables capturadas
+
+```{r reading_dataset, echo=FALSE}
+survey <- read.csv("survey_cleaned.csv",sep = ",", header = T)
+
+str(survey)
+
+```
+
+Como se puede observar se capturaron `r nrow(survey)` observaciones y `r length(names(survey))` columnas, estas fueron diseñadas en funciones de las siguientes categorias:
+
+1. Información demografica
+2. Registro
+3. Matricula
+4. ....
+
+
+A continuación mostramos un resumen rapido de cada una de nuestra columnas:
+
+```{r}
+summary(survey)
+```
+
+## Tratamiento de columnas
+
+Uno de los tratamientos tipicos es la deteccion de valores nulos y según la regla de negocio realizar algún tipo de transformación. por ejemplo, nuestro dataset mostro los siguientes valores nulos
+
+```{r echo=FALSE}
+
+na.summay <- c()
+
+for( myname in names(survey)){
+  
+  s <- as.data.frame(prop.table(table(is.na(survey[,myname]))))
+  operacion <- s %>% filter(Var1 == TRUE) %>% select(Freq)
+  
+  df_temp <- data.frame( 
+    column.name=c(myname),  
+    na.percentage = ifelse( length(operacion$Freq) == 0, 0, operacion$Freq[1] )
+  )
+  
+  na.summay <- rbind(na.summay,df_temp)
+  
+}
+
+na.summay %>% arrange(-na.percentage) %>% filter(na.percentage > 0)
+```
+
+
+### Tratamiento de anios_becas
+
+Si analizamos anios_beca podremos encontrar la siguiente información
+
+```{r}
+summary(survey$anios_beca)
+```
+
+31 NA's en una columna donde saber que los NA's se pueden interpretar como ceros, por eso imputamos esos valores por el valor sugerido.
+
+```{r}
+survey[is.na(survey$anios_beca),"anios_beca"] <- 0
+summary(survey$anios_beca)
+```
+
+
+
+## Analisis descriptivo de datos
+
+En esta seccion comenzamos a sugerir un par de transformacion en funcion de su caracteristicas e interpretación, como por ejemplo:
+
+#### Jornada
+
+```{r}
+df_perc <- as.data.frame(prop.table(table(survey$jornada)))
+df_perc <- df_perc %>% arrange(-Freq)
+
+df_perc
+
+boxplot(df_perc$Freq)
+hist(df_perc$Freq)
+qqnorm(df_perc$Freq)
+
+
+df_perc[df_perc$Var1 %in% c("Mañana, Tarde, Noche","Mañana, Noche") , "categoria"] <- "Jornada Completa"
+df_perc[df_perc$Var1 %in% c("Tarde","Noche") , "categoria"] <- "Unica Jornada"
+df_perc[df_perc$Var1 %in% c("Tarde, Noche") , "categoria"] <- "Doble Jornada"
+
+df_perc <- df_perc %>% select(Var1,categoria)
+
+survey <- left_join(survey,df_perc,by=c("jornada"="Var1"))
+
+survey <- survey[,!(names(survey) %in% c("jornada"))]
+
+names(survey)[length(names(survey))] <- "jornada"
+prop.table(table(survey$jornada))
+```
+
+
+## Correlaciones 
+
+```{r}
+prop.table(table(survey$indice,survey$trabaja),1)
+
+
+ggplot(survey) +
+  aes(x = indice, fill = factor(trabaja)) +
+  geom_bar(position = "stack") +
+  theme(axis.text.x = element_text(angle = 45))
+
+ggplot(survey) +
+  aes(x = indice, fill = factor(trabaja)) +
+  geom_bar(position = "fill") +
+  theme(axis.text.x = element_text(angle = 45))
+
+
+
+chisq.test(table(survey$indice,survey$trabaja))
+
+
+
+```
+
+
+H_0: Las categorias de indice y trabaja son independientes.
+H_A: Las categorias son dependientes.
+
+Regla: Aceptamos nuestras hipotesis nula cuando el p-value de nuestra prueba chis.test es menos a 0.05
+
+Conclusion: Según nuestro p-value rechazamos nuestra hipotesis nula, por la tanta las variables son dependientes.
+
+## Explicativa 
